@@ -66,10 +66,14 @@ class OrdersRepository(OrdersRepositoryInterface):
             {"$inc": {"itens.pizza.quantidade": 50}}
         )
 
-    def delete_registry(self) ->None:
-        collection = collection = self.__db_connection.get_collection(self.__collection_name)
-        collection.delete_one({"_id": ObjectId("698e2c13a65185533a153bde")})
+    def delete_registry(self, order_id: str) -> bool:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+        result = collection.delete_one(
+            {"_id": ObjectId(order_id)}
+        )
 
+        return result.deleted_count > 0
+    
     def delete_many_registries(self) ->None:
         collection = collection = self.__db_connection.get_collection(self.__collection_name)
         collection.delete_many({"itens.refrigerante": {"$exists": True}})
