@@ -8,6 +8,7 @@ from src.main.composer.list_of_orders_composer import list_of_orders_composer
 from src.main.composer.delete_order_composer import delete_order_composer
 from src.main.composer.update_order_status_composer import update_order_status_composer
 from src.main.composer.search_with_pagination_composer import search_with_pagination_composer
+from src.main.composer.count_orders_composer import count_orders_composer
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
 
@@ -66,6 +67,20 @@ def update_status(order_id):
 def list_orders_paginated():
 
     use_case = search_with_pagination_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/orders/count", methods=["GET"])
+def count_orders():
+
+    use_case = count_orders_composer()
 
     http_request = HttpRequest(
         query_params=request.args.to_dict()

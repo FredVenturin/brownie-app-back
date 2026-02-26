@@ -33,7 +33,7 @@ class OrdersRepository(OrdersRepositoryInterface):
         collection = self.__db_connection.get_collection(self.__collection_name)
         return collection.find(doc_filter, projection)
     
-    
+
     def select_with_pagination(self, doc_filter: dict, page: int, limit: int):
         collection = self.__db_connection.get_collection(self.__collection_name)
         skip = (page - 1) * limit
@@ -51,6 +51,13 @@ class OrdersRepository(OrdersRepositoryInterface):
     def select_by_object_id(self, object_id: str) -> dict:
         collection = self.__db_connection.get_collection(self.__collection_name)
         return collection.find_one({"_id": ObjectId(object_id)})
+    
+
+    def count_documents(self, doc_filter: dict) -> int:
+
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        return collection.count_documents(doc_filter)
 
 
     def edit_registry(self, order_id: str, update_fields: dict) -> bool:

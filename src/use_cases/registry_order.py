@@ -26,8 +26,17 @@ class RegistryOrder:
         registry_order_validator(body)
 
     def __format_new_order(self, body: dict) -> dict:
+
         new_order = body["data"]
-        new_order = {**new_order, "created_at": datetime.now()}
+
+        new_order = {
+            **new_order,
+
+            "created_at": datetime.now(),
+
+            "status": new_order.get("status", "created")
+        }
+
         return new_order
 
     def __registry_order(self, new_order: dict) -> None:
