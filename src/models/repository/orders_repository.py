@@ -32,6 +32,13 @@ class OrdersRepository(OrdersRepositoryInterface):
     def select_many_with_properties(self, doc_filter: dict, projection: dict) -> list:
         collection = self.__db_connection.get_collection(self.__collection_name)
         return collection.find(doc_filter, projection)
+    
+    
+    def select_with_pagination(self, doc_filter: dict, page: int, limit: int):
+        collection = self.__db_connection.get_collection(self.__collection_name)
+        skip = (page - 1) * limit
+        cursor = collection.find(doc_filter).skip(skip).limit(limit)
+        return list(cursor)
 
 
     def select_if_property_exists(self, property_name: str) -> dict:
