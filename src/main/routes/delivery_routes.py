@@ -40,7 +40,7 @@ def registry_updater(order_id):
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/order", methods=["GET"])
+@delivery_routes_bp.route("/delivery/orders/all", methods=["GET"])
 def list_orders():
     user_case = list_of_orders_composer()
     http_request = HttpRequest()
@@ -80,7 +80,6 @@ def list_orders_paginated():
 
     return jsonify(response.body), response.status_code
 
-
 @delivery_routes_bp.route("/delivery/orders/count", methods=["GET"])
 def count_orders():
 
@@ -103,7 +102,7 @@ def update_many_orders():
         body=request.json
     )
 
-    response = use_case.execute(http_request)
+    response = use_case.update_many(http_request)
 
     return jsonify(response.body), response.status_code
 
@@ -116,7 +115,7 @@ def increment_orders():
         body=request.json
     )
 
-    response = use_case.execute(http_request)
+    response = use_case.increment(http_request)
 
     return jsonify(response.body), response.status_code
 
@@ -129,7 +128,7 @@ def delete_many_orders():
         body=request.json
     )
 
-    response = use_case.execute(http_request)
+    response = use_case.delete_many(http_request)
 
     return jsonify(response.body), response.status_code
 
@@ -142,6 +141,6 @@ def filter_orders():
         query_params=request.args.to_dict()
     )
 
-    response = use_case.execute(http_request)
+    response = use_case.filter(http_request)
 
     return jsonify(response.body), response.status_code
