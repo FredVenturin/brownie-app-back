@@ -9,6 +9,10 @@ from src.main.composer.delete_order_composer import delete_order_composer
 from src.main.composer.update_order_status_composer import update_order_status_composer
 from src.main.composer.search_with_pagination_composer import search_with_pagination_composer
 from src.main.composer.count_orders_composer import count_orders_composer
+from src.main.composer.delete_many_orders_composer import delete_many_order_composer
+from src.main.composer.filter_orders_composer import filter_orders_composer
+from src.main.composer.update_many_orders_composer import update_many_orders_composer
+from src.main.composer.increment_orders_composer import increment_orders_composer
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
 
@@ -81,6 +85,58 @@ def list_orders_paginated():
 def count_orders():
 
     use_case = count_orders_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/orders/update-many", methods=["PATCH"])
+def update_many_orders():
+
+    use_case = update_many_orders_composer()
+
+    http_request = HttpRequest(
+        body=request.json
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/orders/increment", methods=["PATCH"])
+def increment_orders():
+
+    use_case = increment_orders_composer()
+
+    http_request = HttpRequest(
+        body=request.json
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/orders/delete-many", methods=["DELETE"])
+def delete_many_orders():
+
+    use_case = delete_many_order_composer()
+
+    http_request = HttpRequest(
+        body=request.json
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/orders/filter", methods=["GET"])
+def filter_orders():
+
+    use_case = filter_orders_composer()
 
     http_request = HttpRequest(
         query_params=request.args.to_dict()
