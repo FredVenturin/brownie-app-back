@@ -141,6 +141,6 @@ def filter_orders():
         query_params=request.args.to_dict()
     )
 
-    response = use_case.filter(http_request)
+    response = use_case.filters(http_request)
 
     return jsonify(response.body), response.status_code

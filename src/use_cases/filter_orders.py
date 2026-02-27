@@ -11,7 +11,7 @@ class FilterOrders:
         self.__orders_repository = orders_repository
 
 
-    def filter(self, http_request: HttpRequest) -> HttpResponse:
+    def filters(self, http_request: HttpRequest) -> HttpResponse:
 
         try:
 

@@ -2,6 +2,7 @@ from src.models.repository.interfaces.orders_repository_interface import OrdersR
 from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
 from src.errors.types.http_not_found import HttpNotFoundError
+from src.errors.types.http_unprocessable_entity import HttpUnprocessableEntityError
 from src.errors.error_handler import error_handler
 
 
@@ -15,12 +16,19 @@ class UpdateManyOrders:
 
         try:
 
-            body = http_request.body
+            body = http_request.body or {}
 
-            filter = body["filter"]
-            update = body["update"]
+            filters = body.get("filter")
+            update_data = body.get("update")
 
-            modified_count = self.__update_orders(filter, update)
+            if not filters:
+                raise HttpUnprocessableEntityError("Missing 'filter' field")
+
+            if not update_data:
+                raise HttpUnprocessableEntityError("Missing 'update' field")
+
+
+            modified_count = self.__update_orders(filters, update_data)
 
             return HttpResponse(
                 body={
@@ -37,11 +45,11 @@ class UpdateManyOrders:
             return error_handler(exception)
 
 
-    def __update_orders(self, filter: dict, update: dict) -> int:
+    def __update_orders(self, filters: dict, update_data: dict) -> int:
 
         modified_count = self.__orders_repository.edit_many_registries(
-            filter,
-            update
+            filters,
+            update_data
         )
 
         if modified_count == 0:
