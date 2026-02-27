@@ -63,17 +63,14 @@ def registry_order_validator(body: any):
                     "required": False
                 },
 
-                # opcional com valores permitidos
+                # Obrigatorio com valores permitidos
                 "status": {
                     "type": "string",
                     "required": True,
                     "allowed": [
-                        "created",
                         "confirmed",
                         "preparing",
-                        "sent",
                         "sold",
-                        "delivered",
                         "cancelled"
                     ]
                 },
