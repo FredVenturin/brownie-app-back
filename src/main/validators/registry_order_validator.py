@@ -46,6 +46,11 @@ def registry_order_validator(body: any):
                                 "type": "float",
                                 "required": True,
                                 "min": 0
+                            },
+                            "cost": {
+                                "type": "float",
+                                "required": True,
+                                "min": 0
                             }
                         }
                     }
