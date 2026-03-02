@@ -19,6 +19,14 @@ def registry_order_validator(body: any):
                     "empty": False
                 },
 
+                # ✅ NOVO (TÓPICO 3): data do pedido (opcional)
+                # formato esperado: "YYYY-MM-DD"
+                "order_date": {
+                    "type": "string",
+                    "required": False,
+                    "regex": r"^\d{4}-\d{2}-\d{2}$"
+                },
+
                 # obrigatório
                 "itens": {
                     "type": "list",

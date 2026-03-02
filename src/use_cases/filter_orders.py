@@ -1,8 +1,9 @@
+from datetime import datetime, time
 from src.models.repository.interfaces.orders_repository_interface import OrdersRepositoryInterface
 from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
-from src.errors.types.http_not_found import HttpNotFoundError
 from src.errors.error_handler import error_handler
+from src.utils.order_serializer import serialize_order
 
 
 class FilterOrders:
@@ -10,21 +11,35 @@ class FilterOrders:
     def __init__(self, orders_repository: OrdersRepositoryInterface):
         self.__orders_repository = orders_repository
 
-
     def filters(self, http_request: HttpRequest) -> HttpResponse:
-
         try:
+            qp = http_request.query_params or {}
 
-            filters = http_request.query_params
+            page = int(qp.get("page", 1))
+            limit = int(qp.get("limit", 10))
 
-            orders = self.__filter_orders(filters)
+            doc_filter = self.__build_doc_filter(qp)
+
+            orders = self.__orders_repository.select_with_pagination(
+                doc_filter, page, limit
+            )
+
+            total = self.__orders_repository.count_documents(doc_filter)
+            has_next = (page * limit) < total
+
+            orders = [serialize_order(o) for o in orders]
 
             return HttpResponse(
                 body={
                     "data": {
                         "type": "Orders",
-                        "count": len(orders),
                         "attributes": orders
+                    },
+                    "meta": {
+                        "page": page,
+                        "limit": limit,
+                        "total": total,
+                        "has_next": has_next
                     }
                 },
                 status_code=200
@@ -33,17 +48,36 @@ class FilterOrders:
         except Exception as exception:
             return error_handler(exception)
 
+    def __parse_date(self, s: str) -> datetime:
+        return datetime.strptime(s, "%Y-%m-%d")
 
-    def __filter_orders(self, filters: dict) -> list:
+    def __build_doc_filter(self, qp: dict) -> dict:
+        doc_filter = {}
 
-        cursor = self.__orders_repository.select_many(filters)
+        status = qp.get("status")
+        name = qp.get("name")
+        start_date = qp.get("start_date")
+        end_date = qp.get("end_date")
 
-        orders = list(cursor)
+        if status:
+            doc_filter["status"] = status
 
-        if not orders:
-            raise HttpNotFoundError("Orders not found")
+        if name:
+            doc_filter["name"] = {"$regex": name, "$options": "i"}
 
-        for order in orders:
-            order["_id"] = str(order["_id"])
+        # 🔹 Filtrando por created_at (tópico 2)
+        if start_date or end_date:
+            doc_filter["created_at"] = {}
 
-        return orders
+            if start_date:
+                d = self.__parse_date(start_date).date()
+                doc_filter["created_at"]["$gte"] = datetime.combine(d, time.min)
+
+            if end_date:
+                d = self.__parse_date(end_date).date()
+                doc_filter["created_at"]["$lte"] = datetime.combine(d, time.max)
+
+            if not doc_filter["created_at"]:
+                del doc_filter["created_at"]
+
+        return doc_filter

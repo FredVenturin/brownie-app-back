@@ -3,6 +3,7 @@ from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
 from src.errors.types.http_not_found import HttpNotFoundError
 from src.errors.error_handler import error_handler
+from src.utils.order_serializer import serialize_order
 
 
 class RegistryFinder:
@@ -23,7 +24,7 @@ class RegistryFinder:
         return order
     
     def __format_response(self, order: dict) -> HttpResponse:
-        order["_id"] = str(order["_id"])    
+        order = serialize_order(order)  
 
         return HttpResponse(
             body={
