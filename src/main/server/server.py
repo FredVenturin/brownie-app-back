@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, jsonify
+
 from src.main.routes.delivery_routes import delivery_routes_bp
 from flask_cors import CORS
 
@@ -10,3 +11,7 @@ app.register_blueprint(delivery_routes_bp)
 @app.get("/")
 def health():
     return {"ok": True, "service": "orders-api"}, 200
+
+@app.get("/health")
+def health():
+    return jsonify({"ok": True}), 200
