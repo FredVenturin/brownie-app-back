@@ -4,7 +4,12 @@ from src.main.routes.delivery_routes import delivery_routes_bp
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(
+    app,
+    resources={r"/*": {"origins": [
+        "https://browniesapp.vercel.app"
+    ]}}
+)
 
 app.register_blueprint(delivery_routes_bp)
 
