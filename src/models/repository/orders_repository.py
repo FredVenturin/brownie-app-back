@@ -31,7 +31,7 @@ class OrdersRepository(OrdersRepositoryInterface):
 
     def select_many_with_properties(self, doc_filter: dict, projection: dict) -> list:
         collection = self.__db_connection.get_collection(self.__collection_name)
-        return collection.find(doc_filter, projection)
+        return list(collection.find(doc_filter, projection))
     
 
     def select_with_pagination(self, doc_filter: dict, page: int, limit: int):

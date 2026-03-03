@@ -5,6 +5,7 @@ from src.errors.error_handler import error_handler
 from src.utils.order_serializer import serialize_order
 
 
+
 class ListOrdersPaginated:
 
     def __init__(self, orders_repository: OrdersRepositoryInterface):
