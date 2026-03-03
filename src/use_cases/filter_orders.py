@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from src.models.repository.interfaces.orders_repository_interface import OrdersRepositoryInterface
 from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
@@ -65,19 +65,42 @@ class FilterOrders:
         if name:
             doc_filter["name"] = {"$regex": name, "$options": "i"}
 
-        # 🔹 Filtrando por created_at (tópico 2)
+        # ✅ Filtrando por order_date (data do pedido)
         if start_date or end_date:
-            doc_filter["created_at"] = {}
-
-            if start_date:
+            # Caso: usuário preencheu só start ou só end
+            if start_date and not end_date:
                 d = self.__parse_date(start_date).date()
-                doc_filter["created_at"]["$gte"] = datetime.combine(d, time.min)
+                doc_filter["order_date"] = {
+                    "$gte": datetime.combine(d, time.min)
+                }
 
-            if end_date:
+            elif end_date and not start_date:
                 d = self.__parse_date(end_date).date()
-                doc_filter["created_at"]["$lte"] = datetime.combine(d, time.max)
+                # pega tudo até o final do dia
+                doc_filter["order_date"] = {
+                    "$lte": datetime.combine(d, time.max)
+                }
 
-            if not doc_filter["created_at"]:
-                del doc_filter["created_at"]
+            else:
+                # Caso: os dois preenchidos
+                if start_date == end_date:
+                    # ✅ um único dia: [00:00, próximo dia 00:00)
+                    d = self.__parse_date(start_date).date()
+                    start_dt = datetime.combine(d, time.min)
+                    end_dt = start_dt + timedelta(days=1)
+
+                    doc_filter["order_date"] = {
+                        "$gte": start_dt,
+                        "$lt": end_dt
+                    }
+                else:
+                    # ✅ intervalo: [start 00:00, end 23:59:59.999...]
+                    ds = self.__parse_date(start_date).date()
+                    de = self.__parse_date(end_date).date()
+
+                    doc_filter["order_date"] = {
+                        "$gte": datetime.combine(ds, time.min),
+                        "$lte": datetime.combine(de, time.max),
+                    }
 
         return doc_filter
