@@ -67,31 +67,43 @@ def update_status(order_id):
 
     return jsonify(response.body), response.status_code
 
+from src.errors.error_handler import error_handler
+
 @delivery_routes_bp.route("/delivery/orders", methods=["GET"])
 def list_orders_paginated():
+    try:
+        use_case = search_with_pagination_composer()
 
-    use_case = search_with_pagination_composer()
+        http_request = HttpRequest(
+            query_params=request.args.to_dict()
+        )
 
-    http_request = HttpRequest(
-        query_params=request.args.to_dict()
-    )
+        response = use_case.execute(http_request)
+        return jsonify(response.body), response.status_code
 
-    response = use_case.execute(http_request)
-
-    return jsonify(response.body), response.status_code
+    except Exception as e:
+        response = error_handler(e)
+        return jsonify(response.body), response.status_code
 
 @delivery_routes_bp.route("/delivery/orders/count", methods=["GET"])
 def count_orders():
 
-    use_case = count_orders_composer()
+    try:
+        use_case = count_orders_composer()
 
-    http_request = HttpRequest(
-        query_params=request.args.to_dict()
-    )
+        http_request = HttpRequest(
+            query_params=request.args.to_dict()
+        )
 
-    response = use_case.execute(http_request)
+        response = use_case.execute(http_request)
 
-    return jsonify(response.body), response.status_code
+        return jsonify(response.body), response.status_code
+
+    except Exception as e:
+        response = error_handler(e)
+        return jsonify(response.body), response.status_code
+    
+    
 
 @delivery_routes_bp.route("/delivery/orders/update-many", methods=["PATCH"])
 def update_many_orders():
