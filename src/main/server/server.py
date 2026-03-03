@@ -11,7 +11,7 @@ print("=== ROTAS CARREGADAS ===")
 print(app.url_map)
 print("========================")
 @app.get("/")
-def health():
+def home():
     return {"ok": True, "service": "orders-api"}, 200
 
 @app.get("/health")
