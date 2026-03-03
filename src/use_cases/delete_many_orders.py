@@ -3,6 +3,7 @@ from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
 from src.errors.types.http_not_found import HttpNotFoundError
 from src.errors.error_handler import error_handler
+from src.utils.orders_filter_builder import build_orders_doc_filter
 
 
 class DeleteManyOrders:
@@ -37,8 +38,9 @@ class DeleteManyOrders:
 
 
     def __delete_orders(self, filter: dict) -> int:
+        doc_filter = build_orders_doc_filter(filter)
 
-        deleted_count = self.__orders_repository.delete_many_registries(filter)
+        deleted_count = self.__orders_repository.delete_many_registries(doc_filter)
 
         if deleted_count == 0:
             raise HttpNotFoundError("No orders were deleted")

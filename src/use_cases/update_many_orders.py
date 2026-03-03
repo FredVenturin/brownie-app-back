@@ -4,6 +4,7 @@ from src.main.http_types.http_response import HttpResponse
 from src.errors.types.http_not_found import HttpNotFoundError
 from src.errors.types.http_unprocessable_entity import HttpUnprocessableEntityError
 from src.errors.error_handler import error_handler
+from src.utils.orders_filter_builder import build_orders_doc_filter
 
 
 class UpdateManyOrders:
@@ -46,9 +47,10 @@ class UpdateManyOrders:
 
 
     def __update_orders(self, filters: dict, update_data: dict) -> int:
+        doc_filter = build_orders_doc_filter(filters)
 
         modified_count = self.__orders_repository.edit_many_registries(
-            filters,
+            doc_filter,
             update_data
         )
 
