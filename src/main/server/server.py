@@ -7,7 +7,9 @@ app = Flask(__name__)
 CORS(app)
 
 app.register_blueprint(delivery_routes_bp)
-
+print("=== ROTAS CARREGADAS ===")
+print(app.url_map)
+print("========================")
 @app.get("/")
 def health():
     return {"ok": True, "service": "orders-api"}, 200
@@ -15,3 +17,4 @@ def health():
 @app.get("/health")
 def health():
     return jsonify({"ok": True}), 200
+
