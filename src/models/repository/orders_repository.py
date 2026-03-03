@@ -21,7 +21,7 @@ class OrdersRepository(OrdersRepositoryInterface):
 
     def select_many(self, doc_filter: dict) -> list:
         collection = self.__db_connection.get_collection(self.__collection_name)
-        return collection.find(doc_filter)
+        return list(collection.find(doc_filter))
 
 
     def select_one(self, doc_filter: dict) -> dict:
