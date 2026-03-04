@@ -157,3 +157,15 @@ def filter_orders():
 
     return jsonify(response.body), response.status_code
 
+@delivery_routes_bp.route("/delivery/profit/summary", methods=["GET"])
+def profit_summary():
+    # Placeholder (vamos implementar o cálculo no próximo passo)
+    return jsonify({
+        "data": {
+            "attributes": {
+                "daily": {"revenue": 0, "cost": 0, "profit": 0},
+                "monthly": {"revenue": 0, "cost": 0, "profit": 0},
+                "annual": {"revenue": 0, "cost": 0, "profit": 0},
+            }
+        }
+    }), 200
