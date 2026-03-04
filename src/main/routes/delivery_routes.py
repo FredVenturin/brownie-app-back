@@ -14,6 +14,7 @@ from src.main.composer.filter_orders_composer import filter_orders_composer
 from src.main.composer.update_many_orders_composer import update_many_orders_composer
 from src.main.composer.increment_orders_composer import increment_orders_composer
 from src.main.composer.profit_summary_composer import profit_summary_composer
+from src.main.composer.profit_selected_period_composer import profit_selected_period_composer
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
 
@@ -162,6 +163,15 @@ def filter_orders():
 def profit_summary():
     use_case = profit_summary_composer()
     http_request = HttpRequest()
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/profit", methods=["GET"])
+def profit_selected_period():
+    use_case = profit_selected_period_composer()
+    http_request = HttpRequest(query_params=request.args.to_dict())
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
