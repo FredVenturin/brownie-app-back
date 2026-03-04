@@ -23,18 +23,37 @@ class RegistryUpdater:
     def __validate_body(self, body :dict) ->None:
         registry_updater_validator(body)
 
-    def __update_order(self, order_id: str, body: dict) ->None:
-        update_field = body["data"]
-        self.__orders_repository.edit_registry(order_id, update_field)
+    def __update_order(self, order_id: str, body: dict) -> None:
+        update_data = body["data"] or {}
 
-    def __format_response(self, order_id: str) ->HttpResponse:
+        # Nunca permitir mexer no id
+        update_data.pop("_id", None)
+        update_data.pop("id", None)
+
+        # Se vier itens, recalcula o prices.total automaticamente
+        itens = update_data.get("itens")
+        if isinstance(itens, list):
+            total = 0.0
+            for it in itens:
+                qtd = float(it.get("quantidade", 0) or 0)
+                price = float(it.get("price", 0) or 0)
+                total += qtd * price
+
+            # garante que prices exista
+            prices = update_data.get("prices") or {}
+            prices["total"] = total
+            update_data["prices"] = prices
+
+        self.__orders_repository.edit_registry(order_id, update_data)
+
+    def __format_response(self, order_id: str) -> HttpResponse:
         return HttpResponse(
-            body= {
-              "data": {
-                "order_id": order_id,
-                "type": "Order",
-                "count": 1  
-            }
+            body={
+                "data": {
+                    "type": "Order",
+                    "id": order_id,
+                    "updated": True
+                }
             },
             status_code=200
         )
