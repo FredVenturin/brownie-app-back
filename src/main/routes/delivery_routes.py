@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request
 from src.main.http_types.http_request import HttpRequest
+from datetime import datetime, timedelta
+from src.models.connection.connection_handler import db_connection_handler
 
 from src.main.composer.registry_order_composer import registry_order_composer
 from src.main.composer.registry_finder_composer import registry_finder_composer
@@ -159,13 +161,79 @@ def filter_orders():
 
 @delivery_routes_bp.route("/delivery/profit/summary", methods=["GET"])
 def profit_summary():
-    # Placeholder (vamos implementar o cálculo no próximo passo)
+    db = db_connection_handler.get_db_connection()
+    collection = db.get_collection("orders")
+
+    now = datetime.now()
+
+    def start_of_day(dt: datetime) -> datetime:
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def start_of_month(dt: datetime) -> datetime:
+        return dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    def start_of_year(dt: datetime) -> datetime:
+        return dt.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    def calc_range(dt_start: datetime, dt_end: datetime) -> dict:
+        pipeline = [
+            {
+                "$match": {
+                    "status": "sold",
+                    "order_date": {"$gte": dt_start, "$lt": dt_end},
+                }
+            },
+            {
+                "$project": {
+                    "revenue": {"$ifNull": ["$prices.total", 0]},
+                    "cost": {
+                        "$sum": {
+                            "$map": {
+                                "input": {"$ifNull": ["$itens", []]},
+                                "as": "it",
+                                "in": {
+                                    "$multiply": [
+                                        {"$ifNull": ["$$it.quantidade", 0]},
+                                        {"$ifNull": ["$$it.cost", 0]},
+                                    ]
+                                },
+                            }
+                        }
+                    },
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "revenue": {"$sum": "$revenue"},
+                    "cost": {"$sum": "$cost"},
+                }
+            },
+        ]
+
+        result = list(collection.aggregate(pipeline))
+        if not result:
+            return {"revenue": 0, "cost": 0, "profit": 0}
+
+        revenue = float(result[0].get("revenue", 0) or 0)
+        cost = float(result[0].get("cost", 0) or 0)
+        return {"revenue": revenue, "cost": cost, "profit": revenue - cost}
+
+    daily_start = start_of_day(now)
+    daily_end = daily_start + timedelta(days=1)
+
+    monthly_start = start_of_month(now)
+    monthly_end = (monthly_start.replace(month=monthly_start.month + 1) if monthly_start.month < 12 else monthly_start.replace(year=monthly_start.year + 1, month=1))
+
+    annual_start = start_of_year(now)
+    annual_end = annual_start.replace(year=annual_start.year + 1)
+
     return jsonify({
         "data": {
             "attributes": {
-                "daily": {"revenue": 0, "cost": 0, "profit": 0},
-                "monthly": {"revenue": 0, "cost": 0, "profit": 0},
-                "annual": {"revenue": 0, "cost": 0, "profit": 0},
+                "daily": calc_range(daily_start, daily_end),
+                "monthly": calc_range(monthly_start, monthly_end),
+                "annual": calc_range(annual_start, annual_end),
             }
         }
     }), 200
