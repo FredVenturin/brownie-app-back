@@ -9,13 +9,10 @@ A API foi construída utilizando Python, Flask e MongoDB, seguindo uma arquitetu
 
 Tecnologias utilizadas
 
-Python 3.11
-
-Flask
-
-MongoDB
-
-PyMongo
+Python 3.11<br>
+Flask<br>
+MongoDB<br>
+PyMongo<br>
 
 Flask-CORS
 
