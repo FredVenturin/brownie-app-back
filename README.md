@@ -14,13 +14,13 @@ Flask<br>
 MongoDB<br>
 PyMongo<br>
 
-Flask-CORS
+Flask-CORS<br>
 
-Cerberus
+Cerberus<br>
 
-Gunicorn
+Gunicorn<br>
 
-Funcionalidades
+Funcionalidades<br>
 Pedidos
 
 Criar pedido
@@ -77,30 +77,30 @@ Consulta de lucro por período específico
 
 Estrutura do projeto
 .
-├── run.py
-├── requirements.txt
-└── src
-    ├── main
-    │   ├── server
-    │   ├── routes
-    │   ├── composer
-    │   └── validators
-    ├── models
-    │   ├── connection
-    │   └── repository
-    └── use_cases
+├── run.py<br>
+├── requirements.txt<br>
+└── src<br>
+    ├── main<br>
+    │   ├── server<br>
+    │   ├── routes<br>
+    │   ├── composer<br>
+    │   └── validators<br>
+    ├── models<br>
+    │   ├── connection<br>
+    │   └── repository<br>
+    └── use_cases<br>
 
 A estrutura segue o padrão de separação de responsabilidades:
 
-routes definem os endpoints
+routes definem os endpoints<br>
 
-composer monta dependências
+composer monta dependências<br>
 
-use_cases contém regras de negócio
+use_cases contém regras de negócio<br>
 
-repository comunica com o banco de dados
+repository comunica com o banco de dados<br>
 
-Variáveis de ambiente
+Variáveis de ambiente<br>
 
 Crie um arquivo .env na raiz do projeto.
 
