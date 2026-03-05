@@ -26,6 +26,33 @@ class ProfitSummary:
             annual_start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
             annual_end = annual_start.replace(year=annual_start.year + 1)
 
+            def calc_from_orders(orders: list) -> dict:
+                revenue = 0.0
+                cost = 0.0
+
+                for o in orders:
+                    itens = o.get("itens") or []
+
+                    order_revenue = 0.0
+                    order_cost = 0.0
+
+                    for it in itens:
+                        qtd = float(it.get("quantidade") or 0)
+                        price = float(it.get("price") or 0)
+                        cst = float(it.get("cost") or 0)
+
+                        order_revenue += qtd * price
+                        order_cost += qtd * cst
+
+                    revenue += order_revenue
+                    cost += order_cost
+
+                return {
+                    "revenue": revenue,
+                    "cost": cost,
+                    "profit": revenue - cost,
+                }
+
             def calc_range(dt_start: datetime, dt_end: datetime) -> dict:
                 doc_filter = {
                     "status": "sold",
@@ -34,30 +61,28 @@ class ProfitSummary:
 
                 projection = {
                     "_id": 0,
-                    "prices.total": 1,
                     "itens.quantidade": 1,
+                    "itens.price": 1,
                     "itens.cost": 1,
                 }
 
                 orders = self.__orders_repository.select_many_with_properties(doc_filter, projection)
+                return calc_from_orders(orders)
 
-                revenue = 0.0
-                cost = 0.0
-
-                for o in orders:
-                    revenue += float(((o.get("prices") or {}).get("total") or 0))
-
-                    itens = o.get("itens") or []
-                    for it in itens:
-                        qtd = float(it.get("quantidade") or 0)
-                        cst = float(it.get("cost") or 0)
-                        cost += qtd * cst
-
-                return {
-                    "revenue": revenue,
-                    "cost": cost,
-                    "profit": revenue - cost,
+            def calc_all_time() -> dict:
+                doc_filter = {
+                    "status": "sold",
                 }
+
+                projection = {
+                    "_id": 0,
+                    "itens.quantidade": 1,
+                    "itens.price": 1,
+                    "itens.cost": 1,
+                }
+
+                orders = self.__orders_repository.select_many_with_properties(doc_filter, projection)
+                return calc_from_orders(orders)
 
             return HttpResponse(
                 body={
@@ -66,6 +91,7 @@ class ProfitSummary:
                             "daily": calc_range(daily_start, daily_end),
                             "monthly": calc_range(monthly_start, monthly_end),
                             "annual": calc_range(annual_start, annual_end),
+                            "all_time": calc_all_time(),
                         }
                     }
                 },

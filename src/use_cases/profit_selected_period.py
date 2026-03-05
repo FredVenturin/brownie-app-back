@@ -28,7 +28,6 @@ class ProfitSelectedPeriod:
             month = int(month_raw) if month_raw not in (None, "", "null") else None
             day = int(day_raw) if day_raw not in (None, "", "null") else None
 
-            # validações básicas
             if month is not None and (month < 1 or month > 12):
                 return HttpResponse(body={"error": "month deve ser 1..12"}, status_code=400)
             if day is not None and (day < 1 or day > 31):
@@ -58,8 +57,8 @@ class ProfitSelectedPeriod:
 
             projection = {
                 "_id": 0,
-                "prices.total": 1,
                 "itens.quantidade": 1,
+                "itens.price": 1,
                 "itens.cost": 1,
             }
 
@@ -69,13 +68,21 @@ class ProfitSelectedPeriod:
             cost = 0.0
 
             for o in orders:
-                revenue += float(((o.get("prices") or {}).get("total") or 0))
-
                 itens = o.get("itens") or []
+
+                order_revenue = 0.0
+                order_cost = 0.0
+
                 for it in itens:
                     qtd = float(it.get("quantidade") or 0)
+                    price = float(it.get("price") or 0)
                     cst = float(it.get("cost") or 0)
-                    cost += qtd * cst
+
+                    order_revenue += qtd * price
+                    order_cost += qtd * cst
+
+                revenue += order_revenue
+                cost += order_cost
 
             result = {"revenue": revenue, "cost": cost, "profit": revenue - cost}
 
