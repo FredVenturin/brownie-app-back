@@ -19,6 +19,10 @@ from src.main.composer.list_clients_composer import list_clients_composer
 from src.main.composer.create_client_composer import create_client_composer
 from src.main.composer.create_product_composer import create_product_composer
 from src.main.composer.list_products_composer import list_products_composer
+from src.main.composer.update_client_composer import update_client_composer
+from src.main.composer.delete_client_composer import delete_client_composer
+from src.main.composer.update_product_composer import update_product_composer
+from src.main.composer.delete_product_composer import delete_product_composer
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
 
@@ -229,3 +233,42 @@ def migrate_order_dates():
     use_case = migrate_order_dates_composer()
     response = use_case.execute(http_request=None)
     return response.body, response.status_code
+
+
+@delivery_routes_bp.route("/delivery/clients/<client_id>", methods=["PATCH"])
+def update_client(client_id):
+    use_case = update_client_composer()
+    http_request = HttpRequest(
+        path_params={"client_id": client_id},
+        body=request.json
+    )
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/clients/<client_id>", methods=["DELETE"])
+def delete_client(client_id):
+    use_case = delete_client_composer()
+    http_request = HttpRequest(path_params={"client_id": client_id})
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["PATCH"])
+def update_product(product_id):
+    use_case = update_product_composer()
+    http_request = HttpRequest(
+        path_params={"product_id": product_id},
+        body=request.json
+    )
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["DELETE"])
+def delete_product(product_id):
+    use_case = delete_product_composer()
+    http_request = HttpRequest(path_params={"product_id": product_id})
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code

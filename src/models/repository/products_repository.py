@@ -1,4 +1,5 @@
 from typing import Optional, List, Dict
+from bson import ObjectId
 
 
 class ProductsRepository:
@@ -19,3 +20,14 @@ class ProductsRepository:
         for d in docs:
             d["_id"] = str(d["_id"])
         return docs
+    
+    def update(self, product_id: str, update_fields: Dict) -> bool:
+        result = self.__collection.update_one(
+            {"_id": ObjectId(product_id)},
+            {"$set": update_fields}
+        )
+        return result.matched_count > 0
+    
+    def delete(self, product_id: str) -> bool:
+        result = self.__collection.delete_one({"_id": ObjectId(product_id)})
+        return result.deleted_count > 0
