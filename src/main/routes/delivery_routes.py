@@ -220,3 +220,12 @@ def create_product():
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
+
+from src.main.composer.migrate_order_dates_composer import migrate_order_dates_composer
+
+
+@delivery_routes_bp.route("/admin/migrate-order-dates", methods=["POST"])
+def migrate_order_dates():
+    use_case = migrate_order_dates_composer()
+    response = use_case.execute(http_request=None)
+    return response.body, response.status_code
