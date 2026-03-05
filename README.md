@@ -1,209 +1,224 @@
-Backend de Registro de Pedidos de Doces
+README.md — Backend
+Brownies Delivery API (Backend)
 
-Descrição
+API REST para registro e gerenciamento de pedidos, clientes e produtos de um negócio de venda de doces.
 
-Este projeto é o backend de um sistema para registro e gerenciamento de pedidos de doces. Ele foi desenvolvido utilizando Python com o framework Flask e MongoDB como banco de dados. O sistema permite registrar novos pedidos, buscar, atualizar, deletar, listar, filtrar e paginar pedidos, além de funcionalidades para atualização e exclusão em massa. É importante notar que este backend não inclui funcionalidades de delivery, focando exclusivamente no gerenciamento interno dos pedidos.
+A aplicação permite criar, editar, listar e remover pedidos, além de gerenciar clientes e produtos utilizados nas vendas. Também possui endpoints para métricas de lucro baseadas nos pedidos vendidos.
+
+A API foi construída utilizando Python, Flask e MongoDB, seguindo uma arquitetura em camadas com separação entre rotas, casos de uso e repositórios.
+
+Tecnologias utilizadas
+
+Python 3.11
+
+Flask
+
+MongoDB
+
+PyMongo
+
+Flask-CORS
+
+Cerberus
+
+Gunicorn
 
 Funcionalidades
+Pedidos
 
-•
-Registro de Pedidos: Criação de novos pedidos com detalhes como nome do cliente, itens, quantidades, preços e status.
+Criar pedido
 
-•
-Busca de Pedidos: Recuperação de pedidos específicos por ID.
+Buscar pedido por ID
 
-•
-Atualização de Pedidos: Modificação de informações de pedidos existentes, incluindo o status.
+Atualizar pedido
 
-•
-Listagem de Pedidos: Visualização de todos os pedidos registrados.
+Atualizar status do pedido
 
-•
-Paginação: Listagem de pedidos com suporte a paginação para grandes volumes de dados.
+Deletar pedido
 
-•
-Contagem de Pedidos: Contagem de pedidos com base em critérios de filtro.
+Listar pedidos
 
-•
-Filtro de Pedidos: Filtragem de pedidos por diversos critérios.
+Listagem paginada
 
-•
-Atualização em Massa: Atualização de múltiplos pedidos simultaneamente.
+Filtros de busca
 
-•
-Incremento de Itens: Incremento de quantidades de itens em pedidos.
+Contagem de pedidos
 
-•
-Exclusão de Pedidos: Remoção de pedidos individuais.
+Ações em massa
 
-•
-Exclusão em Massa: Remoção de múltiplos pedidos simultaneamente.
+Clientes
 
-Tecnologias Utilizadas
+Criar cliente
 
-•
-Python: Linguagem de programação principal.
+Listar clientes
 
-•
-Flask: Microframework web para Python.
+Editar cliente
 
-•
-PyMongo: Driver Python para MongoDB.
+Deletar cliente
 
-•
-MongoDB: Banco de dados NoSQL para armazenamento dos pedidos.
+Produtos
 
-•
-Cerberus: Biblioteca para validação de esquemas de dados.
+Criar produto
 
-Dependências
+Listar produtos
 
-As seguintes bibliotecas Python são utilizadas neste projeto:
+Editar produto
 
-Plain Text
+Deletar produto
 
+Lucro
 
-blinker==1.9.0
-Cerberus==1.3.8
-click==8.3.1
-colorama==0.4.6
-dnspython==2.8.0
-Flask==3.1.3
-iniconfig==2.3.0
-itsdangerous==2.2.0
-Jinja2==3.1.6
-MarkupSafe==3.0.3
-packaging==26.0
-pluggy==1.6.0
-Pygments==2.19.2
-pymongo==4.16.0
-pytest==9.0.2
-Werkzeug==3.1.6
+Resumo de lucro diário
 
+Resumo de lucro mensal
 
+Resumo de lucro anual
 
-Estrutura do Projeto
+Lucro total
 
-Plain Text
+Consulta de lucro por período específico
 
-
-modulo_11_MongoDB/
+Estrutura do projeto
+.
 ├── run.py
 ├── requirements.txt
-└── src/
-    ├── __init__.py
-    ├── errors/
-    │   ├── __init__.py
-    │   ├── error_handler.py
-    │   └── types/
-    ├── main/
-    │   ├── __init__.py
-    │   ├── composer/
-    │   ├── http_types/
-    │   ├── routes/
-    │   │   └── delivery_routes.py
-    │   └── server/
-    │       └── server.py
-    │   └── validators/
-    │       └── registry_order_validator.py
-    ├── models/
-    │   ├── __init__.py
-    │   ├── connection/
-    │   │   └── connection_handler.py
-    │   └── repository/
-    │       └── orders_repository.py
-    └── use_cases/
-        ├── __init__.py
-        ├── count_orders.py
-        ├── delete_many_orders.py
-        ├── delete_order.py
-        ├── filter_orders.py
-        ├── increment_orders.py
-        ├── list_of_orders.py
-        ├── registry_finder.py
-        ├── registry_order.py
-        ├── registry_updater.py
-        ├── search_with_pagination.py
-        ├── update_many_orders.py
-        └── update_order_status.py
+└── src
+    ├── main
+    │   ├── server
+    │   ├── routes
+    │   ├── composer
+    │   └── validators
+    ├── models
+    │   ├── connection
+    │   └── repository
+    └── use_cases
 
+A estrutura segue o padrão de separação de responsabilidades:
 
+routes definem os endpoints
 
-Como Rodar o Projeto
+composer monta dependências
 
-Pré-requisitos
+use_cases contém regras de negócio
 
-•
-Python 3.x
+repository comunica com o banco de dados
 
-•
-MongoDB instalado e rodando (na porta padrão 27017, ou configurar a string de conexão em src/models/connection/connection_handler.py )
+Variáveis de ambiente
 
-Instalação
+Crie um arquivo .env na raiz do projeto.
 
-1.
-Clone o repositório (se aplicável, ou descompacte o arquivo):
+MONGO_URI=mongodb://localhost:27017
+DB_NAME=brownies
+CORS_ORIGINS=http://localhost:5173
 
-Bash
+Caso utilize MongoDB Atlas, use a string de conexão fornecida pelo cluster.
 
+Executando o projeto localmente
+1 ) Criar ambiente virtual
+python -m venv venv
+2) Ativar ambiente virtual
 
-git clone <URL_DO_REPOSITORIO>
-cd modulo_11_MongoDB
+Windows:
 
+venv\Scripts\activate
 
+Linux/macOS:
 
-ou
-
-Bash
-
-
-unzip modulo_11_MongoDB.zip
-cd modulo_11_MongoDB
-
-
-
-
-
-2.
-Crie e ative um ambiente virtual:
-
-Bash
-
-
-python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
-.\venv\Scripts\activate    # Windows
-
-
-
-
-
-3.
-Instale as dependências:
-
-Bash
-
-
+source venv/bin/activate
+3) Instalar dependências
 pip install -r requirements.txt
-
-
-
-
-
-Execução
-
-Para iniciar o servidor Flask:
-
-Bash
-
-
+4) Rodar a aplicação
 python run.py
 
+A API iniciará normalmente em:
 
+http://localhost:3000
 
-O servidor estará disponível em http://0.0.0.0:3000.
+Endpoints principais
+Pedidos
 
-Endpoints da API
+Criar pedido
+POST /delivery/order
 
-Todos os endpoints estão sob o prefixo /delivery. Embora o nome do blueprint seja delivery_routes, o sistema não possui funcionalidades de entrega, sendo o nome apenas uma convenção interna.
+Buscar pedido por ID
+GET /delivery/order/{order_id}
 
+Atualizar pedido
+PATCH /delivery/order/{order_id}
+
+Atualizar status do pedido
+PATCH /delivery/order/{order_id}/status
+
+Deletar pedido
+DELETE /delivery/order/{order_id}
+
+Listagem paginada
+GET /delivery/orders?page=1&limit=10
+
+Filtrar pedidos
+GET /delivery/orders/filter
+
+Contar pedidos
+GET /delivery/orders/count
+
+Clientes
+
+Listar clientes
+GET /delivery/clients
+
+Criar cliente
+POST /delivery/clients
+
+Editar cliente
+PATCH /delivery/clients/{client_id}
+
+Deletar cliente
+DELETE /delivery/clients/{client_id}
+
+Produtos
+
+Listar produtos
+GET /delivery/products
+
+Criar produto
+POST /delivery/products
+
+Editar produto
+PATCH /delivery/products/{product_id}
+
+Deletar produto
+DELETE /delivery/products/{product_id}
+
+Lucro
+
+Resumo geral
+GET /delivery/profit/summary
+
+Lucro por período
+GET /delivery/profit?year=2026
+GET /delivery/profit?year=2026&month=3
+GET /delivery/profit?year=2026&month=3&day=5
+
+O lucro é calculado considerando pedidos com status sold.
+
+Deploy
+
+Exemplo de comando recomendado para produção:
+
+gunicorn -b 0.0.0.0:3000 run:app
+
+Configure as variáveis de ambiente no provedor (Render, Railway etc. ).
+
+Integração com frontend
+
+O frontend consome endpoints sob o prefixo:
+
+/delivery
+
+Garanta que o domínio do frontend esteja autorizado em:
+
+CORS_ORIGINS
+
+Licença
+
+Projeto desenvolvido para fins educacionais e uso prático em um negócio de doces.
