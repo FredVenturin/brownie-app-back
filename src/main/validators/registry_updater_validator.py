@@ -21,7 +21,7 @@ def registry_updater_validator(body: any):
                 "status": {
                     "type": "string",
                     "required": False,
-                    "allowed": ["confirmed", "preparing", "sold", "cancelled"]
+                    "allowed": ["confirmed", "preparing","packed", "sold", "cancelled"]
                 },
 
                 "prices": {

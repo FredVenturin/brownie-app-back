@@ -83,6 +83,7 @@ def registry_order_validator(body: any):
                     "allowed": [
                         "confirmed",
                         "preparing",
+                        "packed",
                         "sold",
                         "cancelled"
                     ]
