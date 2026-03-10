@@ -37,7 +37,7 @@ class ProductsRepository:
         return docs
 
     def count_documents(self) -> int:
-        return self.__collection.count_documents({})
+        return self.__collection.estimated_document_count()
 
     def update(self, product_id: str, update_fields: Dict) -> bool:
         result = self.__collection.update_one(
