@@ -15,12 +15,18 @@ class ListProducts:
             limit = int(qp.get("limit", 10))
 
             products = self.__products_repository.list_with_pagination(page, limit)
+            total = self.__products_repository.count_documents()
 
             return HttpResponse(
                 status_code=200,
                 body={
                     "data": {
-                        "attributes": products
+                        "attributes": products,
+                        "meta": {
+                            "page": page,
+                            "limit": limit,
+                            "total": total
+                        }
                     }
                 }
             )
