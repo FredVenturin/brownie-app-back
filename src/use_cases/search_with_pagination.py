@@ -18,15 +18,11 @@ class ListOrdersPaginated:
             page = int(query_params.get("page", 1))
             limit = int(query_params.get("limit", 10))
 
-            # 🔹 TÓPICO 1: SEM FILTRO
             doc_filter = {}
 
             orders = self.__orders_repository.select_with_pagination(
                 doc_filter, page, limit
             )
-
-            total = self.__orders_repository.count_documents(doc_filter)
-            has_next = (page * limit) < total
 
             orders = [serialize_order(o) for o in orders]
 
@@ -39,8 +35,8 @@ class ListOrdersPaginated:
                     "meta": {
                         "page": page,
                         "limit": limit,
-                        "total": total,
-                        "has_next": has_next
+                        "total": len(orders),
+                        "has_next": len(orders) == limit
                     }
                 },
                 status_code=200
