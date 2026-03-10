@@ -187,7 +187,9 @@ def profit_selected_period():
 @delivery_routes_bp.route("/delivery/clients", methods=["GET"])
 def list_clients():
     use_case = list_clients_composer()
-    http_request = HttpRequest()
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code

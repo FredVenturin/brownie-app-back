@@ -10,12 +10,23 @@ class ListClients:
 
     def execute(self, http_request: HttpRequest) -> HttpResponse:
         try:
-            clients = self.__clients_repository.list_all()
+            qp = http_request.query_params or {}
+
+            page = int(qp.get("page", 1))
+            limit = int(qp.get("limit", 10))
+
+            clients = self.__clients_repository.list_with_pagination(page, limit)
+            total = self.__clients_repository.count_documents()
 
             return HttpResponse(
                 body={
                     "data": {
-                        "attributes": clients
+                        "attributes": clients,
+                        "meta": {
+                            "page": page,
+                            "limit": limit,
+                            "total": total
+                        }
                     }
                 },
                 status_code=200
