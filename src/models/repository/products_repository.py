@@ -16,18 +16,36 @@ class ProductsRepository:
         return str(res.inserted_id)
 
     def list_all(self) -> List[Dict]:
-        docs = list(self.__collection.find({}, {"name": 1, "sale_price": 1, "cost": 1}).sort("name", 1))
+        docs = list(
+            self.__collection.find({}, {"name": 1, "sale_price": 1, "cost": 1}).sort("name", 1)
+        )
         for d in docs:
             d["_id"] = str(d["_id"])
         return docs
-    
+
+    def list_with_pagination(self, page: int, limit: int) -> List[Dict]:
+        skip = (page - 1) * limit
+        docs = list(
+            self.__collection
+            .find({}, {"name": 1, "sale_price": 1, "cost": 1})
+            .sort("name", 1)
+            .skip(skip)
+            .limit(limit)
+        )
+        for d in docs:
+            d["_id"] = str(d["_id"])
+        return docs
+
+    def count_documents(self) -> int:
+        return self.__collection.count_documents({})
+
     def update(self, product_id: str, update_fields: Dict) -> bool:
         result = self.__collection.update_one(
             {"_id": ObjectId(product_id)},
             {"$set": update_fields}
         )
         return result.matched_count > 0
-    
+
     def delete(self, product_id: str) -> bool:
         result = self.__collection.delete_one({"_id": ObjectId(product_id)})
         return result.deleted_count > 0

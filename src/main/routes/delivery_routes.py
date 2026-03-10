@@ -208,7 +208,9 @@ def list_products():
 
     use_case = list_products_composer()
 
-    http_request = HttpRequest()
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
 
     response = use_case.execute(http_request)
 
