@@ -276,3 +276,27 @@ def delete_product(product_id):
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/clients/all", methods=["GET"])
+def list_all_clients():
+    use_case = list_clients_composer()
+
+    http_request = HttpRequest(
+        query_params={"page": 1, "limit": 10000}
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+@delivery_routes_bp.route("/delivery/products/all", methods=["GET"])
+def list_all_products():
+    use_case = list_products_composer()
+
+    http_request = HttpRequest(
+        query_params={"page": 1, "limit": 10000}
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
