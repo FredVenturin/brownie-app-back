@@ -1,70 +1,96 @@
 from flask import Blueprint, jsonify, request
+
 from src.main.http_types.http_request import HttpRequest
+from src.errors.error_handler import error_handler
 
 from src.main.composer.registry_order_composer import registry_order_composer
 from src.main.composer.registry_finder_composer import registry_finder_composer
 from src.main.composer.registry_updater_composer import registry_updater_composer
 from src.main.composer.list_of_orders_composer import list_of_orders_composer
 from src.main.composer.delete_order_composer import delete_order_composer
+from src.main.composer.restore_order_composer import restore_order_composer
 from src.main.composer.update_order_status_composer import update_order_status_composer
 from src.main.composer.search_with_pagination_composer import search_with_pagination_composer
 from src.main.composer.count_orders_composer import count_orders_composer
 from src.main.composer.delete_many_orders_composer import delete_many_order_composer
 from src.main.composer.filter_orders_composer import filter_orders_composer
+from src.main.composer.filter_deleted_orders_composer import filter_deleted_orders_composer
 from src.main.composer.update_many_orders_composer import update_many_orders_composer
 from src.main.composer.increment_orders_composer import increment_orders_composer
 from src.main.composer.profit_summary_composer import profit_summary_composer
 from src.main.composer.profit_selected_period_composer import profit_selected_period_composer
+
 from src.main.composer.list_clients_composer import list_clients_composer
 from src.main.composer.create_client_composer import create_client_composer
-from src.main.composer.create_product_composer import create_product_composer
-from src.main.composer.list_products_composer import list_products_composer
 from src.main.composer.update_client_composer import update_client_composer
 from src.main.composer.delete_client_composer import delete_client_composer
+from src.main.composer.list_deleted_clients_composer import list_deleted_clients_composer
+from src.main.composer.restore_client_composer import restore_client_composer
+
+from src.main.composer.list_products_composer import list_products_composer
+from src.main.composer.create_product_composer import create_product_composer
 from src.main.composer.update_product_composer import update_product_composer
 from src.main.composer.delete_product_composer import delete_product_composer
+from src.main.composer.list_deleted_products_composer import list_deleted_products_composer
+from src.main.composer.restore_product_composer import restore_product_composer
+
+from src.main.composer.migrate_order_dates_composer import migrate_order_dates_composer
+
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
+
 
 @delivery_routes_bp.route("/delivery/order", methods=["POST"])
 def registry_order():
     user_case = registry_order_composer()
-    http_request = HttpRequest(body= request.json)
+    http_request = HttpRequest(body=request.json)
     response = user_case.registry(http_request)
 
     return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/order/<order_id>", methods=["GET"])
 def registry_finder(order_id):
     user_case = registry_finder_composer()
-    http_request = HttpRequest(path_params= {"order_id":order_id})
+    http_request = HttpRequest(path_params={"order_id": order_id})
     response = user_case.find(http_request)
 
     return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/order/<order_id>", methods=["PATCH"])
 def registry_updater(order_id):
     user_case = registry_updater_composer()
-    http_request = HttpRequest(path_params= {"order_id":order_id}, body= request.json)
+    http_request = HttpRequest(
+        path_params={"order_id": order_id},
+        body=request.json
+    )
     response = user_case.update(http_request)
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/orders/all", methods=["GET"])
-def list_orders():
-    user_case = list_of_orders_composer()
-    http_request = HttpRequest()
-    response = user_case.find_list(http_request)
-
-    return jsonify(response.body), response.status_code
 
 @delivery_routes_bp.route("/delivery/order/<order_id>", methods=["DELETE"])
 def delete_order(order_id):
     user_case = delete_order_composer()
-    http_request = HttpRequest(path_params= {"order_id":order_id})
+    http_request = HttpRequest(path_params={"order_id": order_id})
     response = user_case.delete(http_request)
 
     return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/orders/<order_id>/restore", methods=["PATCH"])
+def restore_order(order_id):
+    use_case = restore_order_composer()
+
+    http_request = HttpRequest(
+        path_params={"order_id": order_id}
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
 
 @delivery_routes_bp.route("/delivery/order/<order_id>/status", methods=["PATCH"])
 def update_status(order_id):
@@ -77,7 +103,15 @@ def update_status(order_id):
 
     return jsonify(response.body), response.status_code
 
-from src.errors.error_handler import error_handler
+
+@delivery_routes_bp.route("/delivery/orders/all", methods=["GET"])
+def list_orders():
+    user_case = list_of_orders_composer()
+    http_request = HttpRequest()
+    response = user_case.find_list(http_request)
+
+    return jsonify(response.body), response.status_code
+
 
 @delivery_routes_bp.route("/delivery/orders", methods=["GET"])
 def list_orders_paginated():
@@ -95,9 +129,9 @@ def list_orders_paginated():
         response = error_handler(e)
         return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/orders/count", methods=["GET"])
 def count_orders():
-
     try:
         use_case = count_orders_composer()
 
@@ -112,12 +146,36 @@ def count_orders():
     except Exception as e:
         response = error_handler(e)
         return jsonify(response.body), response.status_code
-    
-    
+
+
+@delivery_routes_bp.route("/delivery/orders/filter", methods=["GET"])
+def filter_orders():
+    use_case = filter_orders_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.filters(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/orders/trash", methods=["GET"])
+def list_deleted_orders():
+    use_case = filter_deleted_orders_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.filters(http_request)
+
+    return jsonify(response.body), response.status_code
+
 
 @delivery_routes_bp.route("/delivery/orders/update-many", methods=["PATCH"])
 def update_many_orders():
-
     use_case = update_many_orders_composer()
 
     http_request = HttpRequest(
@@ -128,9 +186,9 @@ def update_many_orders():
 
     return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/orders/increment", methods=["PATCH"])
 def increment_orders():
-
     use_case = increment_orders_composer()
 
     http_request = HttpRequest(
@@ -141,9 +199,9 @@ def increment_orders():
 
     return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/orders/delete-many", methods=["DELETE"])
 def delete_many_orders():
-
     use_case = delete_many_order_composer()
 
     http_request = HttpRequest(
@@ -154,18 +212,6 @@ def delete_many_orders():
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/orders/filter", methods=["GET"])
-def filter_orders():
-
-    use_case = filter_orders_composer()
-
-    http_request = HttpRequest(
-        query_params=request.args.to_dict()
-    )
-
-    response = use_case.filters(http_request)
-
-    return jsonify(response.body), response.status_code
 
 @delivery_routes_bp.route("/delivery/profit/summary", methods=["GET"])
 def profit_summary():
@@ -183,6 +229,7 @@ def profit_selected_period():
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
+
 
 @delivery_routes_bp.route("/delivery/clients", methods=["GET"])
 def list_clients():
@@ -203,41 +250,6 @@ def create_client():
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/products", methods=["GET"])
-def list_products():
-
-    use_case = list_products_composer()
-
-    http_request = HttpRequest(
-        query_params=request.args.to_dict()
-    )
-
-    response = use_case.execute(http_request)
-
-    return jsonify(response.body), response.status_code
-
-@delivery_routes_bp.route("/delivery/products", methods=["POST"])
-def create_product():
-
-    use_case = create_product_composer()
-
-    http_request = HttpRequest(
-        body=request.json
-    )
-
-    response = use_case.execute(http_request)
-
-    return jsonify(response.body), response.status_code
-
-from src.main.composer.migrate_order_dates_composer import migrate_order_dates_composer
-
-
-@delivery_routes_bp.route("/admin/migrate-order-dates", methods=["POST"])
-def migrate_order_dates():
-    use_case = migrate_order_dates_composer()
-    response = use_case.execute(http_request=None)
-    return response.body, response.status_code
-
 
 @delivery_routes_bp.route("/delivery/clients/<client_id>", methods=["PATCH"])
 def update_client(client_id):
@@ -250,6 +262,7 @@ def update_client(client_id):
 
     return jsonify(response.body), response.status_code
 
+
 @delivery_routes_bp.route("/delivery/clients/<client_id>", methods=["DELETE"])
 def delete_client(client_id):
     use_case = delete_client_composer()
@@ -258,24 +271,32 @@ def delete_client(client_id):
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["PATCH"])
-def update_product(product_id):
-    use_case = update_product_composer()
+
+@delivery_routes_bp.route("/delivery/clients/<client_id>/restore", methods=["PATCH"])
+def restore_client(client_id):
+    use_case = restore_client_composer()
+
     http_request = HttpRequest(
-        path_params={"product_id": product_id},
-        body=request.json
+        path_params={"client_id": client_id}
     )
+
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
 
-@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["DELETE"])
-def delete_product(product_id):
-    use_case = delete_product_composer()
-    http_request = HttpRequest(path_params={"product_id": product_id})
+
+@delivery_routes_bp.route("/delivery/clients/trash", methods=["GET"])
+def list_deleted_clients():
+    use_case = list_deleted_clients_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
+
 
 @delivery_routes_bp.route("/delivery/clients/all", methods=["GET"])
 def list_all_clients():
@@ -289,6 +310,80 @@ def list_all_clients():
 
     return jsonify(response.body), response.status_code
 
+
+@delivery_routes_bp.route("/delivery/products", methods=["GET"])
+def list_products():
+    use_case = list_products_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/products", methods=["POST"])
+def create_product():
+    use_case = create_product_composer()
+
+    http_request = HttpRequest(
+        body=request.json
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["PATCH"])
+def update_product(product_id):
+    use_case = update_product_composer()
+    http_request = HttpRequest(
+        path_params={"product_id": product_id},
+        body=request.json
+    )
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/products/<product_id>", methods=["DELETE"])
+def delete_product(product_id):
+    use_case = delete_product_composer()
+    http_request = HttpRequest(path_params={"product_id": product_id})
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/products/<product_id>/restore", methods=["PATCH"])
+def restore_product(product_id):
+    use_case = restore_product_composer()
+
+    http_request = HttpRequest(
+        path_params={"product_id": product_id}
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/products/trash", methods=["GET"])
+def list_deleted_products():
+    use_case = list_deleted_products_composer()
+
+    http_request = HttpRequest(
+        query_params=request.args.to_dict()
+    )
+
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
 @delivery_routes_bp.route("/delivery/products/all", methods=["GET"])
 def list_all_products():
     use_case = list_products_composer()
@@ -300,3 +395,10 @@ def list_all_products():
     response = use_case.execute(http_request)
 
     return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/admin/migrate-order-dates", methods=["POST"])
+def migrate_order_dates():
+    use_case = migrate_order_dates_composer()
+    response = use_case.execute(http_request=None)
+    return response.body, response.status_code

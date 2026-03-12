@@ -50,3 +50,14 @@ class OrdersRepositoryInterface(ABC):
     def delete_many_registries(self) ->None:
         pass
 
+    @abstractmethod
+    def restore_registry(self, order_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    def select_deleted_with_pagination(self, doc_filter: dict, page: int, limit: int) -> list:
+        pass
+
+    @abstractmethod
+    def count_deleted_documents(self, doc_filter: dict) -> int:
+        pass

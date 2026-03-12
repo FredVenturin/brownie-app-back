@@ -1,4 +1,5 @@
 from bson.objectid import ObjectId
+from datetime import datetime
 from src.models.repository.interfaces.orders_repository_interface import OrdersRepositoryInterface
 
 
@@ -11,6 +12,8 @@ class OrdersRepository(OrdersRepositoryInterface):
 
     def insert_document(self, document: dict) -> None:
         collection = self.__db_connection.get_collection(self.__collection_name)
+        document["deleted"] = False
+        document["deleted_at"] = None
         collection.insert_one(document)
 
 
@@ -21,41 +24,58 @@ class OrdersRepository(OrdersRepositoryInterface):
 
     def select_many(self, doc_filter: dict) -> list:
         collection = self.__db_connection.get_collection(self.__collection_name)
-        return list(collection.find(doc_filter))
 
+        doc_filter["deleted"] = {"$ne": True}
+
+        return list(collection.find(doc_filter))
 
     def select_one(self, doc_filter: dict) -> dict:
         collection = self.__db_connection.get_collection(self.__collection_name)
+
+        doc_filter["deleted"] = {"$ne": True}
+
         return collection.find_one(doc_filter)
 
 
     def select_many_with_properties(self, doc_filter: dict, projection: dict) -> list:
         collection = self.__db_connection.get_collection(self.__collection_name)
+
+        doc_filter["deleted"] = {"$ne": True}
+
         return list(collection.find(doc_filter, projection))
     
 
     def select_with_pagination(self, doc_filter: dict, page: int, limit: int):
         collection = self.__db_connection.get_collection(self.__collection_name)
         skip = (page - 1) * limit
+
+        doc_filter["deleted"] = {"$ne": True}
+
         cursor = collection.find(doc_filter).skip(skip).limit(limit)
         return list(cursor)
 
 
     def select_if_property_exists(self, property_name: str) -> dict:
         collection = self.__db_connection.get_collection(self.__collection_name)
-        return collection.find_one(
-            {property_name: {"$exists": True}}
-        )
+        return collection.find_one({
+            property_name: {"$exists": True},
+            "deleted": {"$ne": True}
+        })
 
 
     def select_by_object_id(self, object_id: str) -> dict:
         collection = self.__db_connection.get_collection(self.__collection_name)
-        return collection.find_one({"_id": ObjectId(object_id)})
+
+        return collection.find_one({
+            "_id": ObjectId(object_id),
+            "deleted": {"$ne": True}
+        })
     
 
     def count_documents(self, doc_filter: dict) -> int:
-
         collection = self.__db_connection.get_collection(self.__collection_name)
+
+        doc_filter["deleted"] = {"$ne": True}
 
         return collection.count_documents(doc_filter)
 
@@ -96,16 +116,64 @@ class OrdersRepository(OrdersRepositoryInterface):
     def delete_registry(self, order_id: str) -> bool:
         collection = self.__db_connection.get_collection(self.__collection_name)
 
-        result = collection.delete_one(
-            {"_id": ObjectId(order_id)}
+        result = collection.update_one(
+            {"_id": ObjectId(order_id)},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_at": datetime.utcnow()
+                }
+            }
         )
 
-        return result.deleted_count > 0
+        return result.modified_count > 0
 
 
     def delete_many_registries(self, doc_filter: dict) -> int:
         collection = self.__db_connection.get_collection(self.__collection_name)
 
-        result = collection.delete_many(doc_filter)
+        result = collection.update_many(
+            doc_filter,
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_at": datetime.utcnow()
+                }
+            }
+        )
 
-        return result.deleted_count
+        return result.modified_count
+    
+    def restore_registry(self, order_id: str) -> bool:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        result = collection.update_one(
+            {
+                "_id": ObjectId(order_id),
+                "deleted": True
+            },
+            {
+                "$set": {
+                    "deleted": False,
+                    "deleted_at": None
+                }
+            }
+        )
+
+        return result.modified_count > 0
+    
+    def select_deleted_with_pagination(self, doc_filter: dict, page: int, limit: int):
+        collection = self.__db_connection.get_collection(self.__collection_name)
+        skip = (page - 1) * limit
+
+        doc_filter["deleted"] = True
+
+        cursor = collection.find(doc_filter).skip(skip).limit(limit)
+        return list(cursor)
+    
+    def count_deleted_documents(self, doc_filter: dict) -> int:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        doc_filter["deleted"] = True
+
+        return collection.count_documents(doc_filter)
