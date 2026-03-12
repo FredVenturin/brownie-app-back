@@ -1,6 +1,7 @@
 from src.main.http_types.http_request import HttpRequest
 from src.main.http_types.http_response import HttpResponse
 from src.errors.error_handler import error_handler
+from src.utils.order_serializer import serialize_order
 
 
 class FilterDeletedOrders:
@@ -18,6 +19,7 @@ class FilterDeletedOrders:
             doc_filter = {}
 
             orders = self.__orders_repository.select_deleted_with_pagination(doc_filter, page, limit)
+            orders = [serialize_order(order) for order in orders]
             total = self.__orders_repository.count_deleted_documents({})
 
             return HttpResponse(
