@@ -56,6 +56,7 @@ class FilterOrders:
 
         status = qp.get("status")
         name = qp.get("name")
+        product = qp.get("product")
         start_date = qp.get("start_date")
         end_date = qp.get("end_date")
 
@@ -64,6 +65,9 @@ class FilterOrders:
 
         if name:
             doc_filter["name"] = {"$regex": name, "$options": "i"}
+
+        if product:
+            doc_filter["itens.item"] = {"$regex": product, "$options": "i"}
 
         # ✅ Filtrando por order_date (data do pedido)
         if start_date or end_date:
