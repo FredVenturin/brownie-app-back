@@ -187,19 +187,19 @@ class OrdersRepository(OrdersRepositoryInterface):
                 "deleted": {"$ne": True},
                 "itens": {
                     "$elemMatch": {
-                        "produto": product_name
+                        "item": product_name
                     }
                 }
             },
             {
                 "$set": {
-                    "itens.$[item].price": sale_price,
-                    "itens.$[item].cost": cost
+                    "itens.$[elem].price": sale_price,
+                    "itens.$[elem].cost": cost
                 }
             },
             array_filters=[
-                {"item.produto": product_name}
+                {"elem.item": product_name}
             ]
         )
 
-        return result.modified_count   
+        return result.modified_count
