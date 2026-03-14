@@ -49,6 +49,20 @@ class ProductsRepository:
 
     def count_documents(self) -> int:
         return self.__collection.count_documents({"deleted": {"$ne": True}})
+    
+    def find_by_id(self, product_id: str) -> Dict | None:
+        doc = self.__collection.find_one(
+            {
+                "_id": ObjectId(product_id),
+                "deleted": {"$ne": True}
+            }
+        )
+
+        if not doc:
+            return None
+
+        doc["_id"] = str(doc["_id"])
+        return doc
 
     def update(self, product_id: str, update_fields: Dict) -> bool:
         result = self.__collection.update_one(

@@ -177,3 +177,29 @@ class OrdersRepository(OrdersRepositoryInterface):
         doc_filter["deleted"] = True
 
         return collection.count_documents(doc_filter)
+    
+
+    def update_product_values_in_orders(self, product_name: str, sale_price: float, cost: float) -> int:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        result = collection.update_many(
+            {
+                "deleted": {"$ne": True},
+                "itens": {
+                    "$elemMatch": {
+                        "produto": product_name
+                    }
+                }
+            },
+            {
+                "$set": {
+                    "itens.$[item].price": sale_price,
+                    "itens.$[item].cost": cost
+                }
+            },
+            array_filters=[
+                {"item.produto": product_name}
+            ]
+        )
+
+        return result.modified_count   
