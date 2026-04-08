@@ -1,221 +1,122 @@
-README.md — Backend
-Brownies Delivery API (Backend)
+# Brownies Delivery API
 
-API REST para registro e gerenciamento de pedidos, clientes e produtos de um negócio de venda de doces.
+REST API para gerenciamento de pedidos, clientes e produtos de um negócio de venda de doces. Permite criar, editar, listar e remover registros, além de calcular métricas de lucro com base nos pedidos realizados.
 
-A aplicação permite criar, editar, listar e remover pedidos, além de gerenciar clientes e produtos utilizados nas vendas. Também possui endpoints para métricas de lucro baseadas nos pedidos vendidos.
+## Tecnologias
 
-A API foi construída utilizando Python, Flask e MongoDB, seguindo uma arquitetura em camadas com separação entre rotas, casos de uso e repositórios.
+- Python 3.11
+- Flask
+- MongoDB / PyMongo
+- Flask-CORS
+- Cerberus
+- Gunicorn
 
-Tecnologias utilizadas
+## Funcionalidades
 
-Python 3.11<br>
-Flask<br>
-MongoDB<br>
-PyMongo<br>
+- CRUD completo de pedidos, clientes e produtos
+- Soft-delete com lixeira e restauração
+- Listagem paginada com filtros de busca
+- Atualização de status de pedidos
+- Ações em massa sobre pedidos
+- Estatísticas de pedidos por status em consulta única
+- Resumo de lucro diário, mensal, anual e total em consulta única
+- Lucro por período específico (ano, mês, dia)
 
-Flask-CORS<br>
+## Arquitetura
 
-Cerberus<br>
+O projeto segue arquitetura em camadas com separação de responsabilidades:
 
-Gunicorn<br>
+```
+src/
+├── main/
+│   ├── server/       # configuração do Flask
+│   ├── routes/       # definição dos endpoints
+│   ├── composer/     # injeção de dependências
+│   └── validators/   # validação de entrada
+├── models/
+│   ├── connection/   # conexão e índices do MongoDB
+│   └── repository/   # acesso ao banco de dados
+└── use_cases/        # regras de negócio
+```
 
-Funcionalidades<br>
-Pedidos
+## Configuração
 
-Criar pedido
+Crie um arquivo `.env` na raiz do projeto:
 
-Buscar pedido por ID
-
-Atualizar pedido
-
-Atualizar status do pedido
-
-Deletar pedido
-
-Listar pedidos
-
-Listagem paginada
-
-Filtros de busca
-
-Contagem de pedidos
-
-Ações em massa
-
-Clientes
-
-Criar cliente
-
-Listar clientes
-
-Editar cliente
-
-Deletar cliente
-
-Produtos
-
-Criar produto
-
-Listar produtos
-
-Editar produto
-
-Deletar produto
-
-Lucro
-
-Resumo de lucro diário
-
-Resumo de lucro mensal
-
-Resumo de lucro anual
-
-Lucro total
-
-Consulta de lucro por período específico
-
-Estrutura do projeto
-.
-├── run.py<br>
-├── requirements.txt<br>
-└── src<br>
-    ├── main<br>
-    │   ├── server<br>
-    │   ├── routes<br>
-    │   ├── composer<br>
-    │   └── validators<br>
-    ├── models<br>
-    │   ├── connection<br>
-    │   └── repository<br>
-    └── use_cases<br>
-
-A estrutura segue o padrão de separação de responsabilidades:
-
-routes definem os endpoints<br>
-
-composer monta dependências<br>
-
-use_cases contém regras de negócio<br>
-
-repository comunica com o banco de dados<br>
-
-Variáveis de ambiente<br>
-
-Crie um arquivo .env na raiz do projeto.
-
+```env
 MONGO_URI=mongodb://localhost:27017
-DB_NAME=brownies
+DB_NAME=nome_do_banco
 CORS_ORIGINS=http://localhost:5173
+```
 
-Caso utilize MongoDB Atlas, use a string de conexão fornecida pelo cluster.
+Para produção com MongoDB Atlas, substitua `MONGO_URI` pela string de conexão do cluster.
 
-Executando o projeto localmente
-1 ) Criar ambiente virtual
+## Executando localmente
+
+```bash
+# Criar e ativar ambiente virtual
 python -m venv venv
-2) Ativar ambiente virtual
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
 
-Windows:
-
-venv\Scripts\activate
-
-Linux/macOS:
-
-source venv/bin/activate
-3) Instalar dependências
+# Instalar dependências
 pip install -r requirements.txt
-4) Rodar a aplicação
+
+# Rodar
 python run.py
+```
 
-A API iniciará normalmente em:
+API disponível em `http://localhost:3000`.
 
-http://localhost:3000
+## Endpoints
 
-Endpoints principais
-Pedidos
+### Pedidos
 
-Criar pedido
-POST /delivery/order
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `POST` | `/delivery/order` | Criar pedido |
+| `GET` | `/delivery/order/{id}` | Buscar por ID |
+| `PATCH` | `/delivery/order/{id}` | Editar pedido |
+| `PATCH` | `/delivery/order/{id}/status` | Atualizar status |
+| `DELETE` | `/delivery/order/{id}` | Excluir pedido |
+| `GET` | `/delivery/orders` | Listagem paginada |
+| `GET` | `/delivery/orders/filter` | Filtrar pedidos |
+| `GET` | `/delivery/orders/count` | Contar pedidos |
+| `GET` | `/delivery/orders/stats` | Estatísticas por status |
 
-Buscar pedido por ID
-GET /delivery/order/{order_id}
+### Clientes
 
-Atualizar pedido
-PATCH /delivery/order/{order_id}
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/delivery/clients` | Listar clientes |
+| `POST` | `/delivery/clients` | Criar cliente |
+| `PATCH` | `/delivery/clients/{id}` | Editar cliente |
+| `DELETE` | `/delivery/clients/{id}` | Excluir cliente |
 
-Atualizar status do pedido
-PATCH /delivery/order/{order_id}/status
+### Produtos
 
-Deletar pedido
-DELETE /delivery/order/{order_id}
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/delivery/products` | Listar produtos |
+| `POST` | `/delivery/products` | Criar produto |
+| `PATCH` | `/delivery/products/{id}` | Editar produto |
+| `DELETE` | `/delivery/products/{id}` | Excluir produto |
 
-Listagem paginada
-GET /delivery/orders?page=1&limit=10
+### Lucro
 
-Filtrar pedidos
-GET /delivery/orders/filter
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/delivery/profit/summary` | Resumo diário, mensal, anual e total |
+| `GET` | `/delivery/profit?year=2026` | Lucro anual |
+| `GET` | `/delivery/profit?year=2026&month=3` | Lucro mensal |
+| `GET` | `/delivery/profit?year=2026&month=3&day=5` | Lucro diário |
 
-Contar pedidos
-GET /delivery/orders/count
+O lucro é calculado considerando apenas pedidos com status `sold`.
 
-Clientes
+## Deploy
 
-Listar clientes
-GET /delivery/clients
+```bash
+gunicorn -b 0.0.0.0:$PORT app:app
+```
 
-Criar cliente
-POST /delivery/clients
-
-Editar cliente
-PATCH /delivery/clients/{client_id}
-
-Deletar cliente
-DELETE /delivery/clients/{client_id}
-
-Produtos
-
-Listar produtos
-GET /delivery/products
-
-Criar produto
-POST /delivery/products
-
-Editar produto
-PATCH /delivery/products/{product_id}
-
-Deletar produto
-DELETE /delivery/products/{product_id}
-
-Lucro
-
-Resumo geral
-GET /delivery/profit/summary
-
-Lucro por período
-GET /delivery/profit?year=2026
-GET /delivery/profit?year=2026&month=3
-GET /delivery/profit?year=2026&month=3&day=5
-
-O lucro é calculado considerando pedidos com status sold.
-
-Deploy
-
-Exemplo de comando recomendado para produção:
-
-gunicorn -b 0.0.0.0:3000 run:app
-
-Configure as variáveis de ambiente no provedor (Render, Railway etc. ).
-
-Integração com frontend
-
-O frontend consome endpoints sob o prefixo:
-
-/delivery
-
-Garanta que o domínio do frontend esteja autorizado em:
-
-CORS_ORIGINS
-
-Licença
-
-Projeto desenvolvido para fins educacionais e uso prático em um negócio de doces.
+Configure as variáveis de ambiente no painel do provedor (Railway, Render, etc.). O domínio do frontend deve estar autorizado em `CORS_ORIGINS`.
