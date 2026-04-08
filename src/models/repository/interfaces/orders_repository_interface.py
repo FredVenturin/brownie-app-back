@@ -61,3 +61,16 @@ class OrdersRepositoryInterface(ABC):
     @abstractmethod
     def count_deleted_documents(self, doc_filter: dict) -> int:
         pass
+
+    @abstractmethod
+    def count_by_status(self) -> dict:
+        pass
+
+    @abstractmethod
+    def aggregate_profit_summary(
+        self,
+        daily_start, daily_end,
+        monthly_start, monthly_end,
+        annual_start, annual_end,
+    ) -> dict:
+        pass

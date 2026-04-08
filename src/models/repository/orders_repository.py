@@ -27,7 +27,7 @@ class OrdersRepository(OrdersRepositoryInterface):
 
         doc_filter["deleted"] = {"$ne": True}
 
-        return list(collection.find(doc_filter))
+        return list(collection.find(doc_filter).sort("order_date", -1))
 
     def select_one(self, doc_filter: dict) -> dict:
         collection = self.__db_connection.get_collection(self.__collection_name)
@@ -51,7 +51,7 @@ class OrdersRepository(OrdersRepositoryInterface):
 
         doc_filter["deleted"] = {"$ne": True}
 
-        cursor = collection.find(doc_filter).skip(skip).limit(limit)
+        cursor = collection.find(doc_filter).sort("order_date", -1).skip(skip).limit(limit)
         return list(cursor)
 
 
@@ -168,7 +168,7 @@ class OrdersRepository(OrdersRepositoryInterface):
 
         doc_filter["deleted"] = True
 
-        cursor = collection.find(doc_filter).skip(skip).limit(limit)
+        cursor = collection.find(doc_filter).sort("order_date", -1).skip(skip).limit(limit)
         return list(cursor)
     
     def count_deleted_documents(self, doc_filter: dict) -> int:
@@ -178,6 +178,105 @@ class OrdersRepository(OrdersRepositoryInterface):
 
         return collection.count_documents(doc_filter)
     
+
+    def count_by_status(self) -> dict:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+        pipeline = [
+            {"$match": {"deleted": {"$ne": True}}},
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+        ]
+        result = list(collection.aggregate(pipeline))
+        stats = {
+            "total": 0,
+            "confirmed": 0,
+            "preparing": 0,
+            "packed": 0,
+            "sold": 0,
+            "cancelled": 0,
+        }
+        for item in result:
+            status = item.get("_id") or ""
+            count = item.get("count", 0)
+            stats["total"] += count
+            if status in stats:
+                stats[status] = count
+        return stats
+
+
+    def aggregate_profit_summary(
+        self,
+        daily_start, daily_end,
+        monthly_start, monthly_end,
+        annual_start, annual_end,
+    ) -> dict:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+        pipeline = [
+            {
+                "$match": {
+                    "status": "sold",
+                    "deleted": {"$ne": True},
+                    "itens": {"$exists": True, "$ne": []},
+                }
+            },
+            {"$unwind": "$itens"},
+            {
+                "$addFields": {
+                    "item_revenue": {
+                        "$multiply": [
+                            {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}},
+                            {"$toDouble": {"$ifNull": ["$itens.price", 0]}},
+                        ]
+                    },
+                    "item_cost": {
+                        "$multiply": [
+                            {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}},
+                            {"$toDouble": {"$ifNull": ["$itens.cost", 0]}},
+                        ]
+                    },
+                }
+            },
+            {
+                "$facet": {
+                    "daily": [
+                        {"$match": {"order_date": {"$gte": daily_start, "$lt": daily_end}}},
+                        {"$group": {"_id": None, "revenue": {"$sum": "$item_revenue"}, "cost": {"$sum": "$item_cost"}}},
+                    ],
+                    "monthly": [
+                        {"$match": {"order_date": {"$gte": monthly_start, "$lt": monthly_end}}},
+                        {"$group": {"_id": None, "revenue": {"$sum": "$item_revenue"}, "cost": {"$sum": "$item_cost"}}},
+                    ],
+                    "annual": [
+                        {"$match": {"order_date": {"$gte": annual_start, "$lt": annual_end}}},
+                        {"$group": {"_id": None, "revenue": {"$sum": "$item_revenue"}, "cost": {"$sum": "$item_cost"}}},
+                    ],
+                    "all_time": [
+                        {"$group": {"_id": None, "revenue": {"$sum": "$item_revenue"}, "cost": {"$sum": "$item_cost"}}},
+                    ],
+                }
+            },
+        ]
+
+        results = list(collection.aggregate(pipeline))
+
+        def extract(facet_list: list) -> dict:
+            if facet_list:
+                r = float(facet_list[0].get("revenue") or 0)
+                c = float(facet_list[0].get("cost") or 0)
+                return {"revenue": r, "cost": c, "profit": r - c}
+            return {"revenue": 0.0, "cost": 0.0, "profit": 0.0}
+
+        if not results:
+            empty = {"revenue": 0.0, "cost": 0.0, "profit": 0.0}
+            return {"daily": empty, "monthly": empty, "annual": empty, "all_time": empty}
+
+        facets = results[0]
+        return {
+            "daily": extract(facets.get("daily", [])),
+            "monthly": extract(facets.get("monthly", [])),
+            "annual": extract(facets.get("annual", [])),
+            "all_time": extract(facets.get("all_time", [])),
+        }
+
 
     def update_product_values_in_orders(self, product_name: str, sale_price: float, cost: float) -> int:
         collection = self.__db_connection.get_collection(self.__collection_name)

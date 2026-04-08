@@ -35,6 +35,7 @@ from src.main.composer.list_deleted_products_composer import list_deleted_produc
 from src.main.composer.restore_product_composer import restore_product_composer
 
 from src.main.composer.migrate_order_dates_composer import migrate_order_dates_composer
+from src.main.composer.orders_stats_composer import orders_stats_composer
 
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
@@ -125,6 +126,18 @@ def list_orders_paginated():
         response = use_case.execute(http_request)
         return jsonify(response.body), response.status_code
 
+    except Exception as e:
+        response = error_handler(e)
+        return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/orders/stats", methods=["GET"])
+def orders_stats():
+    try:
+        use_case = orders_stats_composer()
+        http_request = HttpRequest()
+        response = use_case.execute(http_request)
+        return jsonify(response.body), response.status_code
     except Exception as e:
         response = error_handler(e)
         return jsonify(response.body), response.status_code

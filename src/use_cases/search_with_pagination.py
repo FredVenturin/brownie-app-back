@@ -5,7 +5,6 @@ from src.errors.error_handler import error_handler
 from src.utils.order_serializer import serialize_order
 
 
-
 class ListOrdersPaginated:
 
     def __init__(self, orders_repository: OrdersRepositoryInterface):
@@ -20,26 +19,24 @@ class ListOrdersPaginated:
 
             doc_filter = {}
 
-            orders = self.__orders_repository.select_with_pagination(
-                doc_filter, page, limit
-            )
-
+            total = self.__orders_repository.count_documents(doc_filter.copy())
+            orders = self.__orders_repository.select_with_pagination(doc_filter, page, limit)
             orders = [serialize_order(o) for o in orders]
 
             return HttpResponse(
                 body={
                     "data": {
                         "type": "Orders",
-                        "attributes": orders
+                        "attributes": orders,
                     },
                     "meta": {
                         "page": page,
                         "limit": limit,
-                        "total": len(orders),
-                        "has_next": len(orders) == limit
-                    }
+                        "total": total,
+                        "has_next": (page * limit) < total,
+                    },
                 },
-                status_code=200
+                status_code=200,
             )
 
         except Exception as exception:
