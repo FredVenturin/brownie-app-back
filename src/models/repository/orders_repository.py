@@ -302,3 +302,125 @@ class OrdersRepository(OrdersRepositoryInterface):
         )
 
         return result.modified_count
+
+
+    def aggregate_product_sales(self, start_date=None, end_date=None) -> list:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        match = {"status": "sold", "deleted": {"$ne": True}}
+        if start_date and end_date:
+            match["order_date"] = {"$gte": start_date, "$lte": end_date}
+        elif start_date:
+            match["order_date"] = {"$gte": start_date}
+        elif end_date:
+            match["order_date"] = {"$lte": end_date}
+
+        pipeline = [
+            {"$match": match},
+            {"$unwind": "$itens"},
+            {
+                "$group": {
+                    "_id": "$itens.item",
+                    "total_qty": {"$sum": {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}}},
+                    "total_revenue": {
+                        "$sum": {
+                            "$multiply": [
+                                {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}},
+                                {"$toDouble": {"$ifNull": ["$itens.price", 0]}}
+                            ]
+                        }
+                    },
+                    "total_profit": {
+                        "$sum": {
+                            "$subtract": [
+                                {"$multiply": [
+                                    {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}},
+                                    {"$toDouble": {"$ifNull": ["$itens.price", 0]}}
+                                ]},
+                                {"$multiply": [
+                                    {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}},
+                                    {"$toDouble": {"$ifNull": ["$itens.cost", 0]}}
+                                ]}
+                            ]
+                        }
+                    }
+                }
+            },
+            {"$sort": {"total_qty": -1}}
+        ]
+
+        results = list(collection.aggregate(pipeline))
+        return [
+            {
+                "product": r["_id"],
+                "total_qty": int(r["total_qty"]),
+                "total_revenue": round(float(r["total_revenue"]), 2),
+                "total_profit": round(float(r["total_profit"]), 2),
+            }
+            for r in results if r["_id"]
+        ]
+
+
+    def aggregate_client_rankings(self, start_date=None, end_date=None, products=None) -> list:
+        collection = self.__db_connection.get_collection(self.__collection_name)
+
+        match = {"status": "sold", "deleted": {"$ne": True}}
+        if start_date and end_date:
+            match["order_date"] = {"$gte": start_date, "$lte": end_date}
+        elif start_date:
+            match["order_date"] = {"$gte": start_date}
+        elif end_date:
+            match["order_date"] = {"$lte": end_date}
+
+        pipeline = [{"$match": match}, {"$unwind": "$itens"}]
+
+        if products:
+            pipeline.append({"$match": {
+                "itens.item": {"$in": products} if isinstance(products, list) else products
+            }})
+
+        pipeline += [
+            {
+                "$group": {
+                    "_id": {"client": "$name", "product": "$itens.item"},
+                    "qty": {"$sum": {"$toDouble": {"$ifNull": ["$itens.quantidade", 0]}}},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.client",
+                    "total_qty": {"$sum": "$qty"},
+                    "products": {"$push": {"name": "$_id.product", "qty": "$qty"}}
+                }
+            },
+            {
+                "$addFields": {
+                    "top_product": {
+                        "$reduce": {
+                            "input": "$products",
+                            "initialValue": {"name": "", "qty": 0},
+                            "in": {
+                                "$cond": [
+                                    {"$gt": ["$$this.qty", "$$value.qty"]},
+                                    "$$this",
+                                    "$$value"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {"$sort": {"total_qty": -1}},
+            {"$limit": 100}
+        ]
+
+        results = list(collection.aggregate(pipeline))
+        return [
+            {
+                "client": r["_id"],
+                "total_qty": int(r["total_qty"]),
+                "top_product": r["top_product"]["name"] if r.get("top_product") else None,
+                "top_product_qty": int(r["top_product"]["qty"]) if r.get("top_product") else 0,
+            }
+            for r in results if r["_id"]
+        ]

@@ -37,6 +37,9 @@ class DBConnectionHandler:
         orders.create_index([("deleted", 1), ("order_date", -1)])
         orders.create_index([("deleted", 1), ("name", 1)])
 
+        # Analytics indexes: aggregate sold orders by client/product
+        orders.create_index([("status", 1), ("deleted", 1), ("name", 1)])
+
         # Performance indexes for clients and products (list sorted by name)
         self.__db_connection["clients"].create_index([("deleted", 1), ("name", 1)])
         self.__db_connection["products"].create_index([("deleted", 1), ("name", 1)])

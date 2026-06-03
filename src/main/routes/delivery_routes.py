@@ -36,6 +36,8 @@ from src.main.composer.restore_product_composer import restore_product_composer
 
 from src.main.composer.migrate_order_dates_composer import migrate_order_dates_composer
 from src.main.composer.orders_stats_composer import orders_stats_composer
+from src.main.composer.analytics_products_composer import analytics_products_composer
+from src.main.composer.analytics_clients_composer import analytics_clients_composer
 
 
 delivery_routes_bp = Blueprint("delivery_routes", __name__)
@@ -238,6 +240,24 @@ def profit_summary():
 @delivery_routes_bp.route("/delivery/profit", methods=["GET"])
 def profit_selected_period():
     use_case = profit_selected_period_composer()
+    http_request = HttpRequest(query_params=request.args.to_dict())
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/analytics/products", methods=["GET"])
+def analytics_products():
+    use_case = analytics_products_composer()
+    http_request = HttpRequest(query_params=request.args.to_dict())
+    response = use_case.execute(http_request)
+
+    return jsonify(response.body), response.status_code
+
+
+@delivery_routes_bp.route("/delivery/analytics/clients", methods=["GET"])
+def analytics_clients():
+    use_case = analytics_clients_composer()
     http_request = HttpRequest(query_params=request.args.to_dict())
     response = use_case.execute(http_request)
 

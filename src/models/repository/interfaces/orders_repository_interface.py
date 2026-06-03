@@ -74,3 +74,11 @@ class OrdersRepositoryInterface(ABC):
         annual_start, annual_end,
     ) -> dict:
         pass
+
+    @abstractmethod
+    def aggregate_product_sales(self, start_date=None, end_date=None) -> list:
+        pass
+
+    @abstractmethod
+    def aggregate_client_rankings(self, start_date=None, end_date=None, products=None) -> list:
+        pass

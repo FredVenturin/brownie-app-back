@@ -18,7 +18,8 @@ class FilterOrders:
             page = int(qp.get("page", 1))
             limit = int(qp.get("limit", 10))
 
-            doc_filter = self.__build_doc_filter(qp)
+            parsed = self.__parse_params(qp)
+            doc_filter = self.__build_doc_filter(parsed)
 
             orders = self.__orders_repository.select_with_pagination(
                 doc_filter, page, limit
@@ -39,7 +40,14 @@ class FilterOrders:
                         "page": page,
                         "limit": limit,
                         "total": total,
-                        "has_next": has_next
+                        "has_next": has_next,
+                        "filters": {
+                            "status": parsed["statuses"] or None,
+                            "name": parsed["names"] or None,
+                            "product": parsed["products"] or None,
+                            "start_date": parsed["start_date"],
+                            "end_date": parsed["end_date"],
+                        }
                     }
                 },
                 status_code=200
@@ -48,63 +56,62 @@ class FilterOrders:
         except Exception as exception:
             return error_handler(exception)
 
+    def __split(self, raw: str) -> list:
+        return [v.strip() for v in raw.split(",") if v.strip()]
+
     def __parse_date(self, s: str) -> datetime:
         return datetime.strptime(s, "%Y-%m-%d")
 
-    def __build_doc_filter(self, qp: dict) -> dict:
+    def __parse_params(self, qp: dict) -> dict:
+        return {
+            "statuses": self.__split(qp.get("status", "")),
+            "names": self.__split(qp.get("name", "")),
+            "products": self.__split(qp.get("product", "")),
+            "start_date": qp.get("start_date"),
+            "end_date": qp.get("end_date"),
+        }
+
+    def __build_doc_filter(self, p: dict) -> dict:
         doc_filter = {}
 
-        status = qp.get("status")
-        name = qp.get("name")
-        product = qp.get("product")
-        start_date = qp.get("start_date")
-        end_date = qp.get("end_date")
+        if p["statuses"]:
+            statuses = p["statuses"]
+            doc_filter["status"] = {"$in": statuses} if len(statuses) > 1 else statuses[0]
 
-        if status:
-            doc_filter["status"] = status
+        if p["names"]:
+            names = p["names"]
+            if len(names) > 1:
+                doc_filter["name"] = {"$in": names}
+            else:
+                doc_filter["name"] = {"$regex": names[0], "$options": "i"}
 
-        if name:
-            doc_filter["name"] = {"$regex": name, "$options": "i"}
+        if p["products"]:
+            products = p["products"]
+            doc_filter["itens.item"] = {"$in": products} if len(products) > 1 else products[0]
 
-        if product:
-            doc_filter["itens.item"] = {"$regex": product, "$options": "i"}
+        start_date = p["start_date"]
+        end_date = p["end_date"]
 
-        # ✅ Filtrando por order_date (data do pedido)
         if start_date or end_date:
-            # Caso: usuário preencheu só start ou só end
             if start_date and not end_date:
                 d = self.__parse_date(start_date).date()
-                doc_filter["order_date"] = {
-                    "$gte": datetime.combine(d, time.min)
-                }
+                doc_filter["order_date"] = {"$gte": datetime.combine(d, time.min)}
 
             elif end_date and not start_date:
                 d = self.__parse_date(end_date).date()
-                # pega tudo até o final do dia
-                doc_filter["order_date"] = {
-                    "$lte": datetime.combine(d, time.max)
-                }
+                doc_filter["order_date"] = {"$lte": datetime.combine(d, time.max)}
+
+            elif start_date == end_date:
+                d = self.__parse_date(start_date).date()
+                start_dt = datetime.combine(d, time.min)
+                doc_filter["order_date"] = {"$gte": start_dt, "$lt": start_dt + timedelta(days=1)}
 
             else:
-                # Caso: os dois preenchidos
-                if start_date == end_date:
-                    # ✅ um único dia: [00:00, próximo dia 00:00)
-                    d = self.__parse_date(start_date).date()
-                    start_dt = datetime.combine(d, time.min)
-                    end_dt = start_dt + timedelta(days=1)
-
-                    doc_filter["order_date"] = {
-                        "$gte": start_dt,
-                        "$lt": end_dt
-                    }
-                else:
-                    # ✅ intervalo: [start 00:00, end 23:59:59.999...]
-                    ds = self.__parse_date(start_date).date()
-                    de = self.__parse_date(end_date).date()
-
-                    doc_filter["order_date"] = {
-                        "$gte": datetime.combine(ds, time.min),
-                        "$lte": datetime.combine(de, time.max),
-                    }
+                ds = self.__parse_date(start_date).date()
+                de = self.__parse_date(end_date).date()
+                doc_filter["order_date"] = {
+                    "$gte": datetime.combine(ds, time.min),
+                    "$lte": datetime.combine(de, time.max),
+                }
 
         return doc_filter
